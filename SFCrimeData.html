@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>SF Crime Data</title>
+		<script type="text/javascript" src="polymaps.min.js"></script>
+		<script type="text/javascript" src="kml.js"></script>
+		<script type="text/javascript" src="kmeans.js"></script>
+		<link href='http://fonts.googleapis.com/css?family=Raleway:400,200' rel='stylesheet' type='text/css'>
+		<link rel="stylesheet" href="style.css">
+	</head>
+	<body>
+		<h1><img src="sciHeader.png" style="margin-left:0px;"></h1>
+		<h3>2012 San Francisco Crime Data</h3>
+		<div id="map"></div>
+		<p>Click a button to toggle a category. Hover on a data point or button to see specifics.</p>
+		<ul class="Navi">
+			<!--I know these titles are ugly, but it's a hack for a line break.-->
+			<li id="aBut" onclick="aClick()" title="Narcotics, Alcohol, Disturbing the Peace,
+Vandalism, Prostitution">
+				<a>Personal</a>
+			</li>
+			<li id="tBut" onclick="tClick()" title="Theft">
+				<a>Thievery</a>
+			</li>
+			<li id="dtBut" onclick="dtClick()" title="Robbery, Burglary">
+				<a>Burglary</a>
+			</li>
+			<li id="phBut" onclick="phClick()" title="Murder, Assault, Arson">
+				<a>Harmful</a>
+			</li>
+		</ul>
+		<h1><img src="calendar.png" style="vertical-align: middle;"> Filter by month. (forthcoming...)</img></h1>
+		<div id="monthSelect">
+			<form action="">
+				<input type="checkbox" name="month" value="01">Jan  
+				<input type="checkbox" name="month" value="02">Feb  
+				<input type="checkbox" name="month" value="03">March  
+				<input type="checkbox" name="month" value="04">April  
+				<input type="checkbox" name="month" value="05">May  
+				<input type="checkbox" name="month" value="06">June<br>
+				<input type="checkbox" name="month" value="07">July  
+				<input type="checkbox" name="month" value="08">Aug  
+				<input type="checkbox" name="month" value="09">Sep  
+				<input type="checkbox" name="month" value="10">Oct  
+				<input type="checkbox" name="month" value="11">Nov  
+				<input type="checkbox" name="month" value="12">Dec  
+			</form>
+		</div>
+		<ul class="Navi">
+			<li id="kmBut" onclick="kmClick()" title="KMeans Clustering">
+				<a><img src="kmeans.png" style="position:relative;top:15px;"></a>
+			</li>
+		</ul>
+	<div id="copy">
+		Tiles &copy; 2010
+		<a href="http://www.willfolsom.com/">Will Folsom</a>,
+		<a href="http://www.cloudmade.com/">CloudMade</a>,
+		<a href="http://www.openstreetmap.org/">OpenStreetMap</a> contributors,
+		<a href="http://creativecommons.org/licenses/by-sa/2.0/">CCBYSA</a>.
+	</div>
+
+    <script type="text/javascript">
+
+    	var po = org.polymaps;
+
+		var map = po.map()
+			.container(document.getElementById("map").appendChild(po.svg("svg")))
+			.center({lon: -122.4193, lat: 37.7756})
+			.zoomRange([3,15])
+			.add(po.interact());
+			
+		var tileSet = po.image()
+			.url(po.url("http://{S}tile.cloudmade.com"
+			+ "/1a1b06b230af4efdbb989ea99e9841af" // http://cloudmade.com/register
+			+ "/998/256/{Z}/{X}/{Y}.png")
+			.hosts(["a.", "b.", "c.", ""]));
+			
+		/*var points = po.kml()
+			.url("sfCrimeData10k.kml")
+			.tile(false);
+			.on("load", load);*/
+		
+		var personal = po.kml()
+			.url("sfCrimeData10k.kml")
+			.tile(false)
+			.on("load", function(e) {
+				aBool = true;
+				aButton = document.getElementById('aBut').style;
+				aButton.background = "#1CB2BD";
+				compressButton(aButton);
+				for (var i = 0; i < e.features.length; i++) {
+				var f = e.features[i], p = f.data.properties, c = f.element;
+				var T = p.time.indexOf("T");
+				var web = p.type.indexOf(":");
+				var pType = p.type.substring(0,web-4);
+				var pWeb = p.type.substring(web+3, p.type.length);
+				var pDate = p.time.substring(0,T);
+				var pTime = p.time.substring(T+1, p.time.length);
+				c.appendChild(po.svg("title").appendChild(document.createTextNode("Description: " + p.description + 
+																				  "\n\nClassified As: " + pType + 
+																				  "\nCase Number: " + p.name + 
+																				  "\n\nDate: " + pDate + 
+																				  "\n\nTime: " + pTime + 
+																				  "\n\nWeblink: " + pWeb)).parentNode);
+					if (pType.includes("Narcotics") || pType.includes("Alcohol") || 
+						pType.includes("Disturbing the Peace") || pType.includes("Vandalism") || 
+						pType.includes("Prostitution")){
+							c.setAttribute("fill", "#1CB2BD");
+							c.setAttribute("stroke", "#1CB2BD");
+					} else {
+						c.remove();
+					}
+				}
+			});
+			
+		var theft = po.kml()
+			.url("sfCrimeData10k.kml")
+			.tile(false)
+			.on("load", function(e) {
+				tBool = true;
+				tButton = document.getElementById('tBut').style;
+				tButton.background = "#f1c40f";
+				compressButton(tButton);
+				for (var i = 0; i < e.features.length; i++) {
+				var f = e.features[i], p = f.data.properties, c = f.element;
+				var T = p.time.indexOf("T");
+				var web = p.type.indexOf(":");
+				var pType = p.type.substring(0,web-4);
+				var pWeb = p.type.substring(web+3, p.type.length);
+				var pDate = p.time.substring(0,T);
+				var pTime = p.time.substring(T+1, p.time.length);
+				c.appendChild(po.svg("title").appendChild(document.createTextNode("Description: " + p.description + 
+																				  "\n\nClassified As: " + pType + 
+																				  "\nCase Number: " + p.name + 
+																				  "\n\nDate: " + pDate + 
+																				  "\n\nTime: " + pTime + 
+																				  "\n\nWeblink: " + pWeb)).parentNode);
+					if (pType.includes("Theft")){
+						c.setAttribute("fill", "#f1c40f"); //preferred: #EDB81D
+						c.setAttribute("stroke", "#f1c40f");
+						c.setAttribute("fill-opacity", .5);
+					} else {
+						c.remove();
+					}
+				}
+			});
+			
+		var dangerousTheft = po.kml()
+			.url("sfCrimeData10k.kml")
+			.tile(false)
+			.on("load", function(e) {
+				dtBool = true;
+				dtButton = document.getElementById('dtBut').style;
+				dtButton.background = "#ED694F";
+				compressButton(dtButton);
+				for (var i = 0; i < e.features.length; i++) {
+				var f = e.features[i], p = f.data.properties, c = f.element;
+				var T = p.time.indexOf("T");
+				var web = p.type.indexOf(":");
+				var pType = p.type.substring(0,web-4);
+				var pWeb = p.type.substring(web+3, p.type.length);
+				var pDate = p.time.substring(0,T);
+				var pTime = p.time.substring(T+1, p.time.length);
+				c.appendChild(po.svg("title").appendChild(document.createTextNode("Description: " + p.description + 
+																				  "\n\nClassified As: " + pType + 
+																				  "\nCase Number: " + p.name + 
+																				  "\n\nDate: " + pDate + 
+																				  "\n\nTime: " + pTime + 
+																				  "\n\nWeblink: " + pWeb)).parentNode);
+					if (pType.includes("Robbery") || pType.includes("Burglary")){
+						c.setAttribute("fill", "#ED694F");
+						c.setAttribute("stroke", "#ED694F");
+					} else {
+						c.remove();
+					}
+				}
+			});
+		
+		var peopleHarm = po.kml()
+			.url("sfCrimeData10k.kml")
+			.tile(false)
+			.on("load", function(e) {
+				phBool = true;
+				phButton = document.getElementById('phBut').style;
+				phButton.background = "#c51b8a";
+				compressButton(phButton);
+				for (var i = 0; i < e.features.length; i++) {
+				var f = e.features[i], p = f.data.properties, c = f.element;
+				var T = p.time.indexOf("T");
+				var web = p.type.indexOf(":");
+				var pType = p.type.substring(0,web-4);
+				var pWeb = p.type.substring(web+3, p.type.length);
+				var pDate = p.time.substring(0,T);
+				var pTime = p.time.substring(T+1, p.time.length);
+				c.appendChild(po.svg("title").appendChild(document.createTextNode("Description: " + p.description + 
+																				  "\n\nClassified As: " + pType + 
+																				  "\nCase Number: " + p.name + 
+																				  "\n\nDate: " + pDate + 
+																				  "\n\nTime: " + pTime + 
+																				  "\n\nWeblink: " + pWeb)).parentNode);
+					if (pType.includes("Murder") || pType.includes("Assault") || pType.includes("Arson")){
+						c.setAttribute("fill", "#c51b8a");
+						c.setAttribute("stroke", "#c51b8a");
+					} else {
+						c.remove();
+					}
+				}
+			});
+
+		var kMeans = po.kml()
+			.url("sfCrimeData10k.kml")
+			.tile(false)
+			.on("load", kMeansGenerator);
+			
+		function kMeansGenerator(e) {
+			kmBool = false;
+			kmButton = document.getElementById('kmBut').style;
+			releaseButton(kmButton);
+			
+			var cluster = e.tile.cluster || (e.tile.cluster = kmeans()
+				.iterations(16)
+				.size(64));
+			
+			for (var i = 0; i < e.features.length; i++) {
+				cluster.add(e.features[i].data.geometry.coordinates);
+			}
+
+			var tile = e.tile, g = tile.element;
+			while (g.lastChild) g.removeChild(g.lastChild);
+
+			var means = cluster.means();
+			means.sort(function(a, b) { return b.size - a.size; });
+			for (var i = 0; i < means.length; i++) {
+				var mean = means[i], point = g.appendChild(po.svg("circle"));
+				point.setAttribute("cx", mean.x);
+				point.setAttribute("cy", mean.y);
+				point.setAttribute("r", Math.pow(2, tile.zoom - 11) * Math.sqrt(mean.size));
+			}
+		};
+		
+		function releaseButton(e){
+			e.background = "#95a5a6";
+			e.top = "0px";
+			e.left = "0px";
+			e.boxShadow = "9px 1px 0px #777";
+		}
+		
+		function compressButton(e){
+			e.top = "1px";
+			e.left = "9px";
+			e.boxShadow = "";
+		}
+	
+		function aClick(e){
+			if(aBool === true){
+				map.remove(personal);
+				releaseButton(aButton);
+				aBool = false;
+			} else {
+				map.add(personal);
+				aButton.background = "#1CB2BD";
+				compressButton(aButton);
+				aBool = true;
+			}
+		}
+		
+		function tClick(e){
+			if(tBool === true){
+				map.remove(theft);
+				releaseButton(tButton);
+				tBool = false;
+			} else {
+				map.add(theft);
+				tButton.background = "#f1c40f";
+				compressButton(tButton);
+				tBool = true;
+			}
+		}
+		
+		function dtClick(e){
+			if(dtBool === true){
+				map.remove(dangerousTheft);
+				releaseButton(dtButton);
+				dtBool = false;
+			} else {
+				map.add(dangerousTheft);
+				dtButton.background = "#ED694F";
+				compressButton(dtButton);
+				dtBool = true;
+			}
+		}
+		
+		function phClick(e){
+			if(phBool === true){
+				map.remove(peopleHarm);
+				releaseButton(phButton);
+				phBool = false;
+			} else {
+				map.add(peopleHarm);
+				phButton.background = "#c51b8a";
+				compressButton(phButton);
+				phBool = true;
+			}
+		}
+		
+		function kmClick(e){
+			if(kmBool === true){
+				map.remove(kMeans);
+				releaseButton(kmButton);
+				kmBool = false;
+			} else {
+				map.add(kMeans);
+				kmButton.background = "#363A35";
+				compressButton(kmButton);
+				kmBool = true;
+			}
+		}
+
+		map.add(tileSet);
+		map.add(personal);
+		map.add(theft);
+		map.add(dangerousTheft);
+		map.add(peopleHarm);
+
+		map.add(kMeans);
+		map.remove(kMeans);
+		
+		//map.add(points);
+		
+		map.add(po.compass().pan("none"));
+
+    </script>
+</body>
+</html>
